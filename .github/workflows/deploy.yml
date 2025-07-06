@@ -36,7 +36,7 @@ jobs:
           key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
           port: 22
           source: "drupal-app.tar.gz"
-          target: "/tmp"
+          target: "/var/www/html/AllTechHub"
 
       - name: SSH and deploy to server
         uses: appleboy/scp-action@v0.1.4
