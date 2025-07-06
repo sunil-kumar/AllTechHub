@@ -35,10 +35,8 @@ jobs:
           username: ${{ secrets.AZURE_VM_USER }}
           key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
           port: 22
-          source: "./"
-          target: "/var/www/html/AllTechHub"
-          strip_components: 0
-          rm: true
+          source: "drupal-app.tar.gz"
+          target: "/tmp"
 
       - name: SSH and deploy to server
         uses: appleboy/scp-action@v0.1.4
@@ -48,8 +46,9 @@ jobs:
           key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /var/www/html/AllTechHub
-            composer install --no-interaction --prefer-dist --optimize-autoloader
-            sudo chown -R www-data:www-data /var/www/html/AllTechHub
+            sudo rm -rf ${{ secrets.REMOTE_PATH }}/*
+            sudo mkdir -p ${{ secrets.REMOTE_PATH }}
+            sudo tar -xzf /tmp/drupal-app.tar.gz -C ${{ secrets.REMOTE_PATH }}
+            sudo chown -R www-data:www-data ${{ secrets.REMOTE_PATH }}
             sudo chmod -R 755 ${{ secrets.REMOTE_PATH }}
-            sudo systemctl restart apache2
+            echo "Deployment completed!"
