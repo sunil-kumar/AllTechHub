@@ -1,13 +1,18 @@
-# .github/workflows/deploy.yml
-trigger:
+name: Simple PHP Echo Pipeline
+
+on:
+  push:
     branches:
-      include:
-        - main
-  
-  pool:
-    vmImage: 'ubuntu-latest'
-  
-  steps:
-    - script: echo "Pipeline triggered successfully!"
-      displayName: 'Step 1: Initial Hello World'
-  
+      - main
+
+jobs:
+  echo-php:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run a PHP echo
+        run: |
+          echo "<?php echo 'Hello from GitHub Actions!'; ?>" > test.php
+          php test.php
