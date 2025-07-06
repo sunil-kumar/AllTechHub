@@ -1,4 +1,4 @@
-name: Simple PHP Echo Pipeline
+name: Drupal 10 CI/CD Deployment
 
 on:
   push:
@@ -6,13 +6,47 @@ on:
       - main
 
 jobs:
-  echo-php:
+  deploy:
+    name: Build & Deploy to Azure VM
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, ctype, json, iconv, intl, pdo, mysql
 
-      - name: Run a PHP echo
+      - name: Install Composer dependencies
         run: |
-          echo "<?php echo 'Hello from GitHub Actions!'; ?>" > test.php
-          php test.php
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Create artifact archive
+        run: |
+          mkdir artifact
+          rsync -a --exclude='.git' --exclude='artifact' ./ artifact/
+          tar -czf drupal-app.tar.gz -C artifact .
+
+      - name: Copy archive to Azure VM
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.AZURE_VM_IP }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
+          source: "drupal-app.tar.gz"
+          target: "/tmp"
+
+      - name: SSH and deploy to server
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.AZURE_VM_IP }}
+          username: ${{ secrets.AZURE_VM_USER }}
+          key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
+          script: |
+            sudo rm -rf ${{ secrets.REMOTE_PATH }}/*
+            sudo mkdir -p ${{ secrets.REMOTE_PATH }}
+            sudo tar -xzf /tmp/drupal-app.tar.gz -C ${{ secrets.REMOTE_PATH }}
+            sudo chown -R www-data:www-data ${{ secrets.REMOTE_PATH }}
+            sudo chmod -R 755 ${{ secrets.REMOTE_PATH }}
+            echo "Deployment completed!"
