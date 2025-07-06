@@ -1,0 +1,9 @@
+# Main theme library.
+global:
+  js:
+    js/portfolio.js: {}
+  css:
+    base:
+      css/base/style.css: {}
+    theme:
+      css/theme/print.css: { media: print }

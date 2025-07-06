@@ -1,0 +1,12 @@
+name: portfolio
+type: theme
+base theme: stark
+description: A flexible theme with a responsive, mobile-first layout.
+package: Custom
+core_version_requirement: ^10 || ^11
+libraries:
+  - portfolio/global
+regions:
+  header: 'Header'
+  content: 'Content'
+  footer: 'Footer'
