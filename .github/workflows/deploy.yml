@@ -26,7 +26,7 @@ jobs:
             sudo mkdir -p /var/www/html/AllTechHub
             sudo chown -R $USER:$USER /var/www/html/AllTechHub
             sudo chmod -R 755 /var/www/html/AllTechHub
-          EOF            
+          EOF
 
       - name: Deploy code via rsync
         run: |
