@@ -12,43 +12,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, xml, ctype, json, iconv, intl, pdo, mysql
 
-      - name: Install Composer dependencies
+      - name: Set up SSH key
         run: |
-          composer install --no-interaction --prefer-dist --optimize-autoloader
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AZURE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.AZURE_VM_IP }} >> ~/.ssh/known_hosts
 
-      - name: Create artifact archive
+      - name: Deploy code via rsync
         run: |
-          mkdir artifact
-          rsync -a --exclude='.git' --exclude='artifact' ./ artifact/
-          tar -czf drupal-app.tar.gz -C artifact .
-
-      - name: Copy archive to Azure VM
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.AZURE_VM_IP }}
-          username: ${{ secrets.AZURE_VM_USER }}
-          key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
-          port: 22
-          source: "drupal-app.tar.gz"
-          target: "/var/www/html/AllTechHub"
-
-      - name: SSH and deploy to server
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.AZURE_VM_IP }}
-          username: ${{ secrets.AZURE_VM_USER }}
-          key: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            sudo rm -rf ${{ secrets.REMOTE_PATH }}/*
-            sudo mkdir -p ${{ secrets.REMOTE_PATH }}
-            sudo tar -xzf /tmp/drupal-app.tar.gz -C ${{ secrets.REMOTE_PATH }}
-            sudo chown -R www-data:www-data ${{ secrets.REMOTE_PATH }}
-            sudo chmod -R 755 ${{ secrets.REMOTE_PATH }}
-            echo "Deployment completed!"
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_IP }}:/var/www/html/AllTechHub
+            
