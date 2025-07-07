@@ -20,15 +20,18 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.AZURE_VM_IP }} >> ~/.ssh/known_hosts
 
+      - name: Fix permissions on remote server
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_IP }} << 'EOF'
+            sudo mkdir -p /var/www/html/AllTechHub
+            sudo chown -R $USER:$USER /var/www/html/AllTechHub
+            sudo chmod -R 755 /var/www/html/AllTechHub
+          EOF            
+
       - name: Deploy code via rsync
         run: |
           rsync -avz --delete \
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
             ./ ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_IP }}:/var/www/html/AllTechHub
 
-      - name: Fix permissions on remote server
-        run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_IP }} << 'EOF'
-            sudo chown -R $USER:$USER /var/www/html/AllTechHub
-            sudo chmod -R 755 /var/www/html/AllTechHub
-          EOF         
+
