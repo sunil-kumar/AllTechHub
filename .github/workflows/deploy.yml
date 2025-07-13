@@ -34,4 +34,13 @@ jobs:
             -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
             ./ ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_IP }}:/var/www/html/AllTechHub
 
-
+      - name: Run Composer Install on Azure VM
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ${{ secrets.AZURE_VM_USER }}@${{ secrets.AZURE_VM_IP }} << 'EOF'
+            cd /var/www/html/AllTechHub
+            if [ -f composer.json ]; then
+              composer install --no-dev --optimize-autoloader
+            else
+              echo "composer.json not found. Skipping composer install."
+            fi
+          EOF
